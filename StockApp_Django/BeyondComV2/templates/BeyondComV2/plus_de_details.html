@@ -1,0 +1,79 @@
+{% extends 'BeyondComV2/base.html' %}
+
+{% block title %}Plus de détails - Application de gestion des stocks{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Plus de détails</h1>
+
+    <!-- Display current IN and OUT products with search functionality -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h3 class="card-title h5">Produits actuellement ENTRÉS</h3>
+                </div>
+                <div class="card-body">
+                    <input type="text" class="form-control mb-3" id="searchIn" placeholder="Rechercher les produits ENTRÉS...">
+                    <ul class="list-group list-group-flush" id="currentInList">
+                        {% for inventory in current_in_products %}
+                        <li class="list-group-item">{{ inventory.produit.produit_name }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="card-title h5">Produits actuellement SORTIS</h3>
+                </div>
+                <div class="card-body">
+                    <input type="text" class="form-control mb-3" id="searchOut" placeholder="Rechercher les produits SORTIS...">
+                    <ul class="list-group list-group-flush" id="currentOutList">
+                        {% for inventory in current_out_products %}
+                        <li class="list-group-item">{{ inventory.produit.produit_name }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Search functionality for current IN products
+    document.getElementById("searchIn").addEventListener("keyup", function() {
+        var input, filter, ul, li, a, i, txtValue;
+        input = document.getElementById('searchIn');
+        filter = input.value.toUpperCase();
+        ul = document.getElementById("currentInList");
+        li = ul.getElementsByTagName('li');
+        for (i = 0; i < li.length; i++) {
+            txtValue = li[i].textContent || li[i].innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                li[i].style.display = "";
+            } else {
+                li[i].style.display = "none";
+            }
+        }
+    });
+
+    // Search functionality for current OUT products
+    document.getElementById("searchOut").addEventListener("keyup", function() {
+        var input, filter, ul, li, a, i, txtValue;
+        input = document.getElementById('searchOut');
+        filter = input.value.toUpperCase();
+        ul = document.getElementById("currentOutList");
+        li = ul.getElementsByTagName('li');
+        for (i = 0; i < li.length; i++) {
+            txtValue = li[i].textContent || li[i].innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                li[i].style.display = "";
+            } else {
+                li[i].style.display = "none";
+            }
+        }
+    });
+</script>
+{% endblock %}

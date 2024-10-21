@@ -1,0 +1,15 @@
+{% extends "BeyondComV2/base.html" %}
+
+{% block title %}Confirmer la suppression du bac {% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Supprimer le bac</h1>
+  <p>Êtes-vous sûr de vouloir supprimer le bac avec le code-barres "{{ bucket.barcode }}" ?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Confirmer</button>
+  </form>
+  <a href="{% url 'bucket_list' %}" class="btn btn-secondary">Retour à la liste des bacs</a>
+</div>
+{% endblock %}

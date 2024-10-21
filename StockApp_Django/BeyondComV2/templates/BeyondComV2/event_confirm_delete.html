@@ -1,0 +1,15 @@
+{% extends "BeyondComV2/base.html" %}
+
+{% block title %}Confirm Delete Event {% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Delete Event</h1>
+  <p>Are you sure you want to delete the event "{{ event.event_name }}"?</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Confirm</button>
+  </form>
+  <a href="{% url 'event_list' %}" class="btn btn-secondary">Back to event list</a>
+</div>
+{% endblock %}

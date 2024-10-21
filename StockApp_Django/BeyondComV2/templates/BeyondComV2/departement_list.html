@@ -1,0 +1,31 @@
+{% extends 'BeyondComV2/base.html' %}
+
+{% block title %}Départements - Application de gestion des stocks{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Départements</h1>
+    <a class="btn btn-primary mb-3" href="{% url 'departement_create' %}">Ajouter un nouveau département</a>
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for departement in departements %}
+            <tr>
+                <td>{{ departement.departement_id }}</td>
+                <td>{{ departement.department_name }}</td>
+                <td>
+                    <a class="btn btn-secondary btn-sm" href="{% url 'departement_update' departement.pk %}">Modifier</a>
+                    <a class="btn btn-danger btn-sm" href="{% url 'departement_delete' departement.pk %}">Supprimer</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

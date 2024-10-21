@@ -1,0 +1,47 @@
+{% extends 'BeyondComV2/base.html' %}
+
+{% block title %}Fournisseurs - Application de gestion des stocks{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Fournisseurs</h1>
+    <a class="btn btn-primary mb-3" href="{% url 'fournisseur_create' %}">Ajouter un nouveau fournisseur</a>
+    <div class="mb-3">
+        <form method="get" class="row g-3">
+            <div class="col-md-5">
+                <input type="text" name="nom" class="form-control" placeholder="Rechercher par nom...">
+            </div>
+            <div class="col-md-5">
+                <input type="text" name="tel" class="form-control" placeholder="Rechercher par numéro de téléphone...">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+            </div>
+        </form>
+    </div>
+
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Téléphone</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fournisseur in fournisseurs %}
+            <tr>
+                <td>{{ fournisseur.fournisseur_id }}</td>
+                <td>{{ fournisseur.fournisseur_name }}</td>
+                <td>{{ fournisseur.tel }}</td>
+                <td>
+                    <a class="btn btn-secondary btn-sm" href="{% url 'fournisseur_update' fournisseur.pk %}">Modifier</a>
+                    <a class="btn btn-danger btn-sm" href="{% url 'fournisseur_delete' fournisseur.pk %}">Supprimer</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

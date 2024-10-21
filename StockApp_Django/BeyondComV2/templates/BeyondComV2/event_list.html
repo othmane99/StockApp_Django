@@ -1,0 +1,51 @@
+{% extends 'BeyondComV2/base.html' %}
+
+{% block title %}Événements - Application de gestion des stocks{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1>Liste des événements</h1>
+  <a href="{% url 'event_create' %}" class="btn btn-primary mb-3">Ajouter un événement</a>
+
+  <table class="table table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Nom de l'événement</th>
+        <th>Date pré-événement</th>
+        <th>Début de l'événement</th>
+        <th>Fin de l'événement</th>
+        <th>Date post-événement</th>
+        <th>Produits et bacs</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for event_detail in event_details %}
+        <tr>
+          <td>{{ event_detail.event.event_name }}</td>
+          <td>{{ event_detail.event.event_pre_date|date:"Y-m-d" }}</td>
+          <td>{{ event_detail.event.event_start|date:"Y-m-d" }}</td>
+          <td>{{ event_detail.event.event_end|date:"Y-m-d" }}</td>
+          <td>{{ event_detail.event.event_post_date|date:"Y-m-d" }}</td>
+          <td>
+            <ul>
+              {% for inventory in event_detail.products %}
+                <li>{{ inventory.produit.produit_name }} - Quantité disponible : {{ inventory.quantite_produit }}
+                  <ul>
+                    {% for bucket in inventory.buckets.all %}
+                      <li>{{ bucket.barcode }}</li>
+                    {% endfor %}
+                  </ul>
+                </li>
+              {% endfor %}
+            </ul>
+          </td>
+          <td>
+            <a class="btn btn-danger btn-sm" href="{% url 'event_delete' event_detail.event.pk %}">Supprimer</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

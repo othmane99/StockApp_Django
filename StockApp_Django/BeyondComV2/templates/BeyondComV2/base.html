@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{% block title %}Application de gestion des stocks{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .lead {
+            text-align: justify;
+        }   
+        .table-container {
+            overflow-x: auto; /* Activer le défilement horizontal */
+            -webkit-overflow-scrolling: touch; /* Défilement fluide sur iOS */
+            width: 100%;
+        }
+        table {
+            width: 100%; /* Faire en sorte que la table prenne toute la largeur */
+            border-collapse: collapse; /* Fusionner les bordures */
+        }
+        th, td {
+            border: 1px solid #ddd; /* Bordure pour les cellules de la table */
+            padding: 8px; /* Remplissage des cellules de la table */
+            text-align: left; /* Aligner le texte à gauche */
+        }
+        th {
+            background-color: #f2f2f2; /* Couleur de fond pour les cellules d'en-tête */
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">Application de gestion des stocks</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'fournisseur_list' %}">Fournisseurs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'employe_list' %}">Employés</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'produit_list' %}">Produits</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'inventaire_list' %}">Inventaires</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'departement_list' %}">Départements</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'event_list' %}">Événements</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'bucket_list' %}">Flycases</a>
+                    </li>
+                    <!-- Ajouter un menu déroulant ici -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Ajouter
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{% url 'fournisseur_create' %}">Ajouter un fournisseur</a></li>
+                            <li><a class="dropdown-item" href="{% url 'produit_create' %}">Ajouter un produit</a></li>
+                            <li><a class="dropdown-item" href="{% url 'employe_create' %}">Ajouter un employé</a></li>
+                            <li><a class="dropdown-item" href="{% url 'event_create' %}">Ajouter un événement</a></li>
+                            <li><a class="dropdown-item" href="{% url 'bucket_create' %}">Ajouter un flycase</a></li>
+                            <!-- Ajouter plus d'options si nécessaire -->
+                        </ul>
+                    
+                    <!-- Fin du menu déroulant -->
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'logout' %}">Déconnexion</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Connexion</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <!-- Bootstrap JS et ses dépendances -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+</body>
+</html>

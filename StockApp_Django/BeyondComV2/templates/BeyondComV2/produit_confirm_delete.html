@@ -1,0 +1,24 @@
+{% extends 'BeyondComV2/base.html' %}
+
+{% block title %}Confirm Delete{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Confirm Delete</h1>
+    <p>Are you sure you want to delete the following product?</p>
+    <ul>
+        <li><strong>Name:</strong> {{ produit.produit_name }}</li>
+        <li><strong>Category:</strong> {{ produit.category }}</li>
+        <li><strong>Code Bar:</strong> {{ produit.code_bar }}</li>
+        <li><strong>Price:</strong> {{ produit.prix }}</li>
+        <li><strong>Description:</strong> {{ produit.description }}</li>
+        <li><strong>Fournisseur:</strong> {{ produit.fournisseur }}</li>
+        <li><strong>Département:</strong> {{ produit.departement }}</li>
+    </ul>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <a href="{% url 'produit_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

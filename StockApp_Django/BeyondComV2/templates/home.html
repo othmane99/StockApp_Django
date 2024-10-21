@@ -1,0 +1,172 @@
+{% extends 'BeyondComV2/base.html' %}
+
+{% block title %}Accueil - Application de gestion des stocks{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">Bienvenue dans l'Application de gestion des stocks !</h1>
+    <p class="lead" style="text-align: justify;">
+        C'est la page d'accueil de votre système de gestion des stocks. Utilisez la barre de navigation pour gérer les fournisseurs, les employés, les produits, les inventaires et les départements.
+    </p>
+    <a href="{% url 'plus_de_details' %}" class="btn btn-primary mb-3">Plus de détails</a>
+    <hr class="my-4">
+    <p>Cliquez sur les liens dans la barre de navigation pour commencer à gérer vos données.</p>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Liste des Événements</h5>
+                    <p class="card-text">Visualisez et gérez les événements</p>
+                    <a href="{% url 'event_list' %}" class="btn btn-primary">Voir les Événements</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Liste des Flycases</h5>
+                    <p class="card-text">Visualisez et gérez les flycases</p>
+                    <a href="{% url 'bucket_list' %}" class="btn btn-primary">Voir les Flycases</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container mb-4">
+                <h3>Distribution des États des Inventaires</h3>
+                <canvas id="inventoryStateDistributionChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4 total-products-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Nombre total de Produits</h5>
+                            <p class="card-number font-weight-bold">{{ total_number_of_products }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4 total-price-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Prix total des Produits</h5>
+                            <p class="card-number font-weight-bold">{{ total_price_of_products }} dh</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4 valid-warranties-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Garanties Valides</h5>
+                            <p class="card-number font-weight-bold">{{ valid_warranties }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card mb-4 expired-warranties-card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Garanties Expirées</h5>
+                            <p class="card-number font-weight-bold">{{ expired_warranties }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container mb-4">
+                <h3>Statistiques des Produits</h3>
+                <canvas id="productStatisticsChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container mb-4">
+                <h3>Nombre de Produits par Département</h3>
+                <canvas id="departmentProductCountChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="chart-container mb-4">
+                <h3>Distribution de l'État des Garanties</h3>
+                <canvas id="warrantyStatusDistributionChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Récupérer les données pour le graphique de distribution des états des inventaires depuis la vue Django
+    const inventoryStateDistributionData = {{ inventory_state_distribution_data|safe }};
+
+    // Afficher le graphique de distribution des états des inventaires
+    var inventoryStateDistributionCtx = document.getElementById('inventoryStateDistributionChart').getContext('2d');
+    var inventoryStateDistributionChart = new Chart(inventoryStateDistributionCtx, {
+        type: 'pie',
+        data: inventoryStateDistributionData,
+        options: {
+            // Options supplémentaires pour le graphique circulaire
+        }
+    });
+
+    // Récupérer les données pour le graphique de statistiques des produits depuis la vue Django
+    const productStatisticsData = {{ product_statistics_data|safe }};
+
+    // Afficher le graphique de statistiques des produits
+    var productStatisticsCtx = document.getElementById('productStatisticsChart').getContext('2d');
+    var productStatisticsChart = new Chart(productStatisticsCtx, {
+        type: 'bar',
+        data: productStatisticsData,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Récupérer les données pour le graphique du nombre de produits par département depuis la vue Django
+    const departmentProductCountData = {{ department_product_count_data|safe }};
+
+    // Afficher le graphique du nombre de produits par département
+    var departmentProductCountCtx = document.getElementById('departmentProductCountChart').getContext('2d');
+    var departmentProductCountChart = new Chart(departmentProductCountCtx, {
+        type: 'bar',
+        data: departmentProductCountData,
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Récupérer les données pour le graphique de distribution de l'état des garanties depuis la vue Django
+    const warrantyStatusDistributionData = {{ warranty_status_distribution_data|safe }};
+
+    // Afficher le graphique de distribution de l'état des garanties
+    var warrantyStatusDistributionCtx = document.getElementById('warrantyStatusDistributionChart').getContext('2d');
+    var warrantyStatusDistributionChart = new Chart(warrantyStatusDistributionCtx, {
+        type: 'pie',
+        data: warrantyStatusDistributionData,
+        options: {
+            // Options supplémentaires pour le graphique circulaire
+        }
+    });
+</script>
+{% endblock %}

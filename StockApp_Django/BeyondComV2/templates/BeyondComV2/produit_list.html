@@ -1,0 +1,81 @@
+{% extends 'BeyondComV2/base.html' %}
+
+{% block title %}Liste des Produits - Application de gestion des stocks{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Liste des Produits</h1>
+    <div class="mb-3">
+        <a class="btn btn-primary mb-2" href="{% url 'produit_create' %}">Ajouter un Produit</a>
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control" placeholder="Rechercher par nom..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="code_bar_search" class="form-control" placeholder="Rechercher par code-barre..." value="{{ code_bar_search_query }}">
+            </div>
+            <div class="col-md-2">
+                <select name="department" class="form-control">
+                    <option value="" selected>Tous les Départements</option>
+                    {% for department in departments %}
+                    <option value="{{ department }}" {% if department == selected_department %}selected{% endif %}>{{ department }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+            </div>
+            <div class="col-md-1">
+                <div class="d-grid">
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+                    <a class="btn btn-primary w-100 mb-2" href="{% url 'download_produit_csv' %}">
+                        <i class="fas fa-file-download"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Nom du Produit</th>
+                <th>Catégorie</th>
+                <th>Code Barre</th>
+                <th>Prix</th>
+                <th>Description</th>
+                <th>Fournisseur</th>
+                <th>Département</th>
+                <th>Garantie</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for produit in produits %}
+            <tr>
+                <td>{{ produit.produit_id }}</td>
+                <td>{{ produit.produit_name }}</td>
+                <td>{{ produit.category }}</td>
+                <td>{{ produit.code_bar }}</td>
+                <td>{{ produit.prix }}</td>
+                <td>{{ produit.description }}</td>
+                <td>{% if produit.fournisseur %}{{ produit.fournisseur.fournisseur_name }}{% endif %}</td>
+                <td>{% if produit.departement %}{{ produit.departement.department_name }}{% endif %}</td>
+                <td>
+                    {% if produit.warranty_isValid %}
+                        <span class="badge bg-success">Valide</span>
+                    {% else %}
+                        <span class="badge bg-danger">Expirée</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a class="btn btn-secondary btn-sm" href="{% url 'produit_update' produit.pk %}">Modifier</a>
+                    <a class="btn btn-danger btn-sm" href="{% url 'produit_delete' produit.pk %}">Supprimer</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

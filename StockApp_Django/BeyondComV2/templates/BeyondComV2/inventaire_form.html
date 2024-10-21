@@ -1,0 +1,49 @@
+{% extends 'BeyondComV2/base.html' %}
+
+{% block title %}Add/Edit Inventory{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>{{ form.instance.pk|yesno:"Edit Inventory,Add Inventory" }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="id_produit">Product:</label>
+                    {{ form.produit }}
+                </div>
+                <div class="form-group">
+                    <label for="id_etat_InOut">Etat:</label>
+                    {{ form.etat_InOut }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="id_date_in">Date In:</label>
+                    <input type="date" id="id_date_in" name="date_in" class="form-control" value="{{ form.date_in.value|date:'Y-m-d' }}">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="id_quantite_produit">Quantite:</label>
+                    {{ form.quantite_produit }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="id_last_updated">Last Updated:</label>
+                    {{ form.last_updated }}
+                </div>
+                <div class="form-group">
+                    <label for="id_state">State:</label>
+                    {{ form.state }}
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+{% endblock %}

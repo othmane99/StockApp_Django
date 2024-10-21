@@ -1,0 +1,13 @@
+{% extends 'BeyondComV2/base.html' %}
+
+{% block title %}Confirm Delete{% endblock %}
+
+{% block content %}
+<h1>Confirm Delete</h1>
+<p>Are you sure you want to delete "{{ employe.nom }}"?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Delete</button>
+    <a href="{% url 'employe_list' %}">Cancel</a>
+</form>
+{% endblock %}
