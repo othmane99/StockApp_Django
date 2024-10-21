@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Fournisseur, Employe, Departement, Produit, Inventaire, Event, Bucket
+from .models import Fournisseur, Employe, Departement, Produit, Inventaire, Event
 
 class FournisseurSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,14 +26,7 @@ class InventaireSerializer(serializers.ModelSerializer):
         model = Inventaire
         fields = '__all__'
 
-##########################################################################################
-
 class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = '__all__'
-
-class BucketSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Bucket
         fields = '__all__'

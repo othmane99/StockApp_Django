@@ -95,29 +95,6 @@ class Inventaire(models.Model):
         return f"{self.produit.produit_name} (ID: {self.inventaire_id}, Quantité: {self.quantite_produit})"
 
 
-###################################################################################3
-
-
-from django.db import models
-from django.utils import timezone
-import uuid
-
-class Bucket(models.Model):
-    bucket_id = models.AutoField(primary_key=True)
-    barcode = models.CharField(max_length=100, unique=True, editable=False)
-    products = models.ManyToManyField('Inventaire', related_name='buckets')
-
-    def save(self, *args, **kwargs):
-        if not self.barcode:
-            prefix = '00'
-            uuid_part = uuid.uuid4().hex[:10]
-            self.barcode = prefix + uuid_part
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.barcode
-
-
 class Event(models.Model):
     event_id = models.AutoField(primary_key=True)
     event_name = models.CharField(max_length=100)
@@ -126,7 +103,6 @@ class Event(models.Model):
     event_end = models.DateTimeField()
     event_post_date = models.DateTimeField()
     list_of_products = models.ManyToManyField('Inventaire', related_name='events')
-    list_of_buckets = models.ManyToManyField(Bucket, related_name='events')
 
     def handle_event_pre_date(self):
         if timezone.now() >= self.event_pre_date:

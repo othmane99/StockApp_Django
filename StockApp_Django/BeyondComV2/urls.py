@@ -3,18 +3,17 @@ from . import views
 from rest_framework.routers import DefaultRouter
 from .views import (
     FournisseurViewSet, EmployeViewSet, DepartementViewSet, ProduitViewSet, 
-    InventaireViewSet, EventViewSet, BucketViewSet
+    InventaireViewSet, EventViewSet
 )
 from .views import (
     FournisseurViewSet, EmployeViewSet, DepartementViewSet, ProduitViewSet, 
-    InventaireViewSet, EventViewSet, BucketViewSet,
+    InventaireViewSet, EventViewSet, 
     fournisseur_list, fournisseur_create, fournisseur_update, fournisseur_delete,
     employe_list, employe_create, employe_update, employe_delete,
     produit_list, produit_create, produit_update, produit_delete,
     inventaire_list, inventaire_create, inventaire_update, inventaire_delete,
     departement_list, departement_create, departement_update, departement_delete,
-    event_list, event_create, event_update, event_delete, 
-    bucket_list, bucket_create, bucket_update, bucket_delete
+    event_list, event_create, event_update, event_delete
 )
 
 
@@ -25,7 +24,6 @@ router.register(r'departements', DepartementViewSet)
 router.register(r'produits', ProduitViewSet)
 router.register(r'inventaires', InventaireViewSet)
 router.register(r'Events', EventViewSet)
-router.register(r'Buckets', BucketViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
@@ -54,15 +52,9 @@ urlpatterns = [
     path('departements/<int:pk>/edit/', departement_update, name='departement_update'),
     path('departements/<int:pk>/delete/', departement_delete, name='departement_delete'),
 
-    ################################################################################################
-
     path('events/', views.event_list, name='event_list'),
     path('events/create/', views.event_create, name='event_create'),
     path('events/update/<int:pk>/', views.event_update, name='event_update'),
     path('events/delete/<int:pk>/', views.event_delete, name='event_delete'),
 
-    path('buckets/', views.bucket_list, name='bucket_list'),
-    path('buckets/create/', views.bucket_create, name='bucket_create'),
-    path('buckets/update/<int:pk>/', views.bucket_update, name='bucket_update'),
-    path('buckets/delete/<int:pk>/', views.bucket_delete, name='bucket_delete'),
 ]

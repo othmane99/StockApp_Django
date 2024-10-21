@@ -8,8 +8,7 @@ from .views import (
     inventaire_list, inventaire_create, inventaire_update, inventaire_delete,
     departement_list, departement_create, departement_update, departement_delete, 
     download_produit_csv, download_inventaire_csv, plus_de_details, 
-    event_list, event_create, event_update, event_delete,
-    bucket_list, bucket_create, bucket_update, bucket_delete
+    event_list, event_create, event_update, event_delete
 )
 
 urlpatterns = [
@@ -32,8 +31,6 @@ urlpatterns = [
     path('produits/<int:pk>/delete/', produit_delete, name='produit_delete'),
 
     path('inventaires/', inventaire_list, name='inventaire_list'),
-    # path('inventaire/update_etat/<int:pk>/', update_etat, name='update_etat'),
-    # path('inventaire/update_state/<int:pk>/', update_state, name='update_state'),
     path('download_inventaire_csv/', download_inventaire_csv, name='download_inventaire_csv'),
     path('inventaires/create/', inventaire_create, name='inventaire_create'),
     path('inventaires/<int:pk>/edit/', inventaire_update, name='inventaire_update'),
@@ -44,15 +41,9 @@ urlpatterns = [
     path('departements/<int:pk>/edit/', departement_update, name='departement_update'),
     path('departements/<int:pk>/delete/', departement_delete, name='departement_delete'),
 
-    ####################################################################################################3
-
     path('events/', views.event_list, name='event_list'),
     path('events/create/', views.event_create, name='event_create'),
     path('events/update/<int:pk>/', views.event_update, name='event_update'),
     path('events/delete/<int:pk>/', views.event_delete, name='event_delete'),
 
-    path('buckets/', views.bucket_list, name='bucket_list'),
-    path('buckets/create/', views.bucket_create, name='bucket_create'),
-    path('buckets/update/<int:pk>/', views.bucket_update, name='bucket_update'),
-    path('buckets/delete/<int:pk>/', views.bucket_delete, name='bucket_delete'),
 ]

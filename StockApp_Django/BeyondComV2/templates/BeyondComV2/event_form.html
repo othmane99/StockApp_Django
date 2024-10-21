@@ -38,12 +38,5 @@
             <li>{{ inventaire.produit.produit_name }} (ID: {{ inventaire.inventaire_id }}, Quantité: {{ inventaire.quantite_produit }})</li>
         {% endfor %}
     </ul>
-
-    <h2>Buckets Disponibles</h2>
-    <ul>
-        {% for bucket in form.list_of_buckets.field.queryset %}
-            <li>{{ bucket.barcode }}</li>
-        {% endfor %}
-    </ul>
 </div>
 {% endblock %}

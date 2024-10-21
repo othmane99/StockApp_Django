@@ -1,8 +1,8 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Fournisseur, Employe, Produit, Inventaire, Departement, Event, Bucket
-from .forms import FournisseurForm, EmployeForm, ProduitForm, InventaireForm, DepartementForm, EventForm, BucketForm
+from .models import Fournisseur, Employe, Produit, Inventaire, Departement, Event
+from .forms import FournisseurForm, EmployeForm, ProduitForm, InventaireForm, DepartementForm, EventForm
 from rest_framework import viewsets
-from .serializers import FournisseurSerializer, EmployeSerializer, DepartementSerializer, ProduitSerializer, InventaireSerializer, EventSerializer, BucketSerializer
+from .serializers import FournisseurSerializer, EmployeSerializer, DepartementSerializer, ProduitSerializer, InventaireSerializer, EventSerializer
 from django.db.models import Sum, Count
 from django.http import HttpResponse
 from django.http import JsonResponse
@@ -321,44 +321,6 @@ def inventaire_list(request):
         'search_query': search_query,
     })
 
-
-
-
-# @csrf_exempt
-# def update_etat(request, pk):
-#     if request.method == 'POST':
-#         try:
-#             inventaire = Inventaire.objects.get(pk=pk)
-#             data = json.loads(request.body)
-#             new_etat = data.get('etat')
-#             if new_etat in dict(Inventaire.etat_InOut_choices):
-#                 inventaire.etat_InOut = new_etat
-#                 inventaire.save()
-#                 return JsonResponse({'status': 'success'})
-#             else:
-#                 return JsonResponse({'status': 'error', 'message': 'Invalid etat'}, status=400)
-#         except Inventaire.DoesNotExist:
-#             return JsonResponse({'status': 'error', 'message': 'Inventaire not found'}, status=404)
-#     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
-
-# @csrf_exempt
-# def update_state(request, pk):
-#     if request.method == 'POST':
-#         try:
-#             inventaire = Inventaire.objects.get(pk=pk)
-#             data = json.loads(request.body)
-#             new_state = data.get('state')
-#             if new_state in dict(Inventaire.state_choices):
-#                 inventaire.state = new_state
-#                 inventaire.save()
-#                 return JsonResponse({'status': 'success'})
-#             else:
-#                 return JsonResponse({'status': 'error', 'message': 'Invalid state'}, status=400)
-#         except Inventaire.DoesNotExist:
-#             return JsonResponse({'status': 'error', 'message': 'Inventaire not found'}, status=404)
-#     return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
-
-
 import csv
 from django.http import HttpResponse
 from .models import Produit
@@ -556,12 +518,12 @@ class InventaireViewSet(viewsets.ModelViewSet):
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from .models import Event, Bucket, Inventaire
-from .forms import EventForm, BucketForm
+from .models import Event, Inventaire
+from .forms import EventForm
 import uuid
 
 def event_list(request):
-    events = Event.objects.all().prefetch_related('list_of_products__produit', 'list_of_buckets')
+    events = Event.objects.all().prefetch_related('list_of_products__produit')
     event_details = []
     for event in events:
         event_detail = {
@@ -572,35 +534,30 @@ def event_list(request):
     return render(request, 'BeyondComV2/event_list.html', {'event_details': event_details})
 
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Event, Bucket, Inventaire
+from .models import Event, Inventaire
 from django.contrib import messages
 from .forms import EventForm
 
 def event_create(request):
     if request.method == 'POST':
         form = EventForm(request.POST)
-        print("allo1")
         if form.is_valid():
-            print("allo2")
-            event = form.save()  # Directly save the form (improved)
+            event = form.save()
             messages.success(request, 'Event created successfully!')
             return redirect('event_list')
         else:
-            print(form.errors)  # Affiche les erreurs du formulaire dans la console
             messages.error(request, 'Please correct the errors in the form.')
     else:
         form = EventForm()
 
     products = Inventaire.objects.filter(etat_InOut='IN', state='On').select_related('produit')
-    buckets = Bucket.objects.all()
     inventaires_with_details = [{
         'inventaire_id': inv.inventaire_id,
         'produit_name': inv.produit.produit_name,
         'quantity': inv.quantite_produit
     } for inv in products]
 
-    return render(request, 'BeyondComV2/event_form.html', {'form': form, 'inventaires_with_details': inventaires_with_details, 'buckets': buckets})
-
+    return render(request, 'BeyondComV2/event_form.html', {'form': form, 'inventaires_with_details': inventaires_with_details})
 
 
 def event_update(request, pk):
@@ -608,22 +565,19 @@ def event_update(request, pk):
     if request.method == 'POST':
         form = EventForm(request.POST, instance=event)
         if form.is_valid():
-            event = form.save(commit=False)
-            event.save()
-            form.save_m2m()
+            event = form.save()
             return redirect('event_list')
     else:
         form = EventForm(instance=event)
 
     products = Inventaire.objects.filter(etat_InOut='IN', state='On').select_related('produit')
-    buckets = Bucket.objects.all()
     inventaires_with_details = [{
         'inventaire_id': inv.inventaire_id,
         'produit_name': inv.produit.produit_name,
         'quantity': inv.quantite_produit
     } for inv in products]
 
-    return render(request, 'BeyondComV2/event_form.html', {'form': form, 'inventaires_with_details': inventaires_with_details, 'buckets': buckets})
+    return render(request, 'BeyondComV2/event_form.html', {'form': form, 'inventaires_with_details': inventaires_with_details})
 
 
 def event_delete(request, pk):
@@ -632,70 +586,6 @@ def event_delete(request, pk):
         event.delete()
         return redirect('event_list')
     return render(request, 'BeyondComV2/event_confirm_delete.html', {'event': event})
-
-def bucket_create(request):
-    if request.method == 'POST':
-        form = BucketForm(request.POST)
-        if form.is_valid():
-            bucket = form.save(commit=False)
-            bucket.barcode = "00" + uuid.uuid4().hex[:10]
-            bucket.save()
-
-            selected_inventaire_ids = request.POST.getlist('products')
-            selected_out_inventaires = Inventaire.objects.filter(inventaire_id__in=selected_inventaire_ids, etat_InOut='OUT')
-            if selected_out_inventaires.exists():
-                messages.error(request, "Some selected products are OUT.")
-                return render(request, 'BeyondComV2/bucket_form.html', {'form': form})
-
-            selected_off_maintenance_inventaires = Inventaire.objects.filter(inventaire_id__in=selected_inventaire_ids, state__in=['Off', 'Maintenance'])
-            if selected_off_maintenance_inventaires.exists():
-                messages.error(request, "Some selected products are OFF or in Maintenance.")
-                return render(request, 'BeyondComV2/bucket_form.html', {'form': form})
-
-            selected_inventaires = Inventaire.objects.filter(inventaire_id__in=selected_inventaire_ids, state='On', etat_InOut='IN')
-            bucket.products.set(selected_inventaires)
-
-            return redirect('bucket_list')
-    else:
-        form = BucketForm()
-
-    inventaires = Inventaire.objects.filter(etat_InOut='IN', state='On').select_related('produit')
-    inventaires_with_details = [{
-        'inventaire_id': inv.inventaire_id,
-        'produit_name': inv.produit.produit_name,
-        'quantity': inv.quantite_produit
-    } for inv in inventaires]
-
-    return render(request, 'BeyondComV2/bucket_form.html', {'form': form, 'inventaires_with_details': inventaires_with_details})
-
-def bucket_list(request):
-    buckets = Bucket.objects.all()
-    return render(request, 'BeyondComV2/bucket_list.html', {'buckets': buckets})
-
-def bucket_update(request, pk):
-    bucket = get_object_or_404(Bucket, pk=pk)
-    if request.method == 'POST':
-        form = BucketForm(request.POST, instance=bucket)
-        if form.is_valid():
-            form.save()
-            return redirect('bucket_list')
-    else:
-        form = BucketForm(instance=bucket)
-    return render(request, 'BeyondComV2/bucket_form.html', {'form': form})
-
-def bucket_delete(request, pk):
-    bucket = get_object_or_404(Bucket, pk=pk)
-    if request.method == 'POST':
-        bucket.delete()
-        return redirect('bucket_list')
-    return render(request, 'BeyondComV2/bucket_confirm_delete.html', {'bucket': bucket})
-
-
-
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-
-class BucketViewSet(viewsets.ModelViewSet):
-    queryset = Bucket.objects.all()
-    serializer_class = BucketSerializer

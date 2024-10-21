@@ -31,11 +31,6 @@
             <ul>
               {% for inventory in event_detail.products %}
                 <li>{{ inventory.produit.produit_name }} - Quantité disponible : {{ inventory.quantite_produit }}
-                  <ul>
-                    {% for bucket in inventory.buckets.all %}
-                      <li>{{ bucket.barcode }}</li>
-                    {% endfor %}
-                  </ul>
                 </li>
               {% endfor %}
             </ul>
