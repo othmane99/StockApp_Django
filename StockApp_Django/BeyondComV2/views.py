@@ -3,23 +3,22 @@ from .models import Fournisseur, Employe, Produit, Inventaire, Departement, Even
 from .forms import FournisseurForm, EmployeForm, ProduitForm, InventaireForm, DepartementForm, EventForm
 from rest_framework import viewsets
 from .serializers import FournisseurSerializer, EmployeSerializer, DepartementSerializer, ProduitSerializer, InventaireSerializer, EventSerializer
-from django.db.models import Sum, Count
+from django.db.models import Sum, F, Count
 from django.http import HttpResponse
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 import csv
-from django.db.models import Sum, F
-from django.template.loader import render_to_string
-from django.db.models import Count, Case, When, Value, IntegerField
-
-
 
 def home(request):
-    # Calculate total number of products considering the quantity in the inventory
-    total_number_of_products = Inventaire.objects.aggregate(total=Sum('quantite_produit'))['total'] or 0
+    # Calculate total number of products considering only IN products
+    total_number_of_products = Inventaire.objects.filter(
+        etat_InOut='IN'
+    ).aggregate(total=Sum('quantite_produit'))['total'] or 0
 
-    # Calculate total price of products considering the quantity in the inventory
-    total_price_of_products = Inventaire.objects.aggregate(total=Sum(F('quantite_produit') * F('produit__prix')))['total'] or 0
+    # Calculate total price of products considering only IN products
+    total_price_of_products = Inventaire.objects.filter(
+        etat_InOut='IN'
+    ).aggregate(
+        total=Sum(F('quantite_produit') * F('produit__prix'))
+    )['total'] or 0
 
     # Calculate the number of valid and expired warranties
     valid_warranties = Produit.objects.filter(warranty_isValid=True).count()
@@ -111,27 +110,15 @@ def home(request):
 
 
 
-
-
-
-
-
-# Votre vue pour la liste des fournisseurs
 def fournisseur_list(request):
     fournisseurs = Fournisseur.objects.all()
-
-    # Filtrage par nom
     nom_query = request.GET.get('nom')
+    tel_query = request.GET.get('tel')
     if nom_query:
         fournisseurs = fournisseurs.filter(fournisseur_name__icontains=nom_query)
-
-    # Filtrage par numéro de téléphone
-    tel_query = request.GET.get('tel')
     if tel_query:
         fournisseurs = fournisseurs.filter(tel__icontains=tel_query)
-
     return render(request, 'BeyondComV2/fournisseur_list.html', {'fournisseurs': fournisseurs})
-
 
 def fournisseur_create(request):
     if request.method == 'POST':
@@ -142,7 +129,6 @@ def fournisseur_create(request):
     else:
         form = FournisseurForm()
     return render(request, 'BeyondComV2/fournisseur_form.html', {'form': form})
-
 
 def fournisseur_update(request, pk):
     fournisseur = get_object_or_404(Fournisseur, pk=pk)
@@ -162,27 +148,16 @@ def fournisseur_delete(request, pk):
         return redirect('fournisseur_list')
     return render(request, 'BeyondComV2/fournisseur_confirm_delete.html', {'fournisseur': fournisseur})
 
-# Employe views
 def employe_list(request):
     search_query = request.GET.get('search', '')
     department_filter = request.GET.get('department', '')
-
     employes = Employe.objects.all()
-
     if search_query:
         employes = employes.filter(nom__icontains=search_query)
-    
     if department_filter:
         employes = employes.filter(departement_de_travail__department_name=department_filter)
-
     departments = Departement.objects.all()
-    
-    context = {
-        'employes': employes,
-        'departments': departments
-    }
-    
-    return render(request, 'BeyondComV2/employe_list.html', context)
+    return render(request, 'BeyondComV2/employe_list.html', {'employes': employes, 'departments': departments})
 
 def employe_create(request):
     if request.method == 'POST':
@@ -212,35 +187,19 @@ def employe_delete(request, pk):
         return redirect('employe_list')
     return render(request, 'BeyondComV2/employe_confirm_delete.html', {'employe': employe})
 
-
-
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Produit
-from .forms import ProduitForm
-
 def produit_list(request):
     produits = Produit.objects.all()
-
-    # Liste des départements
     departments = Produit.objects.values_list('departement__department_name', flat=True).distinct()
-
-    # Filtrer par département
     selected_department = request.GET.get('department')
+    search_query = request.GET.get('search')
+    code_bar_search_query = request.GET.get('code_bar_search')
     if selected_department:
         produits = produits.filter(departement__department_name=selected_department)
-
-    # Fonctionnalité de recherche
-    search_query = request.GET.get('search')
     if search_query:
         produits = produits.filter(produit_name__icontains=search_query)
-
-    # Recherche par code barre
-    code_bar_search_query = request.GET.get('code_bar_search')
     if code_bar_search_query:
         produits = produits.filter(code_bar__icontains=code_bar_search_query)
-
     return render(request, 'BeyondComV2/produit_list.html', {'produits': produits, 'departments': departments})
-
 
 def produit_create(request):
     if request.method == 'POST':
@@ -251,7 +210,6 @@ def produit_create(request):
     else:
         form = ProduitForm()
     return render(request, 'BeyondComV2/produit_form.html', {'form': form})
-
 
 def produit_update(request, pk):
     produit = get_object_or_404(Produit, pk=pk)
@@ -264,7 +222,6 @@ def produit_update(request, pk):
         form = ProduitForm(instance=produit)
     return render(request, 'BeyondComV2/produit_form.html', {'form': form, 'produit': produit})
 
-
 def produit_delete(request, pk):
     produit = get_object_or_404(Produit, pk=pk)
     if request.method == 'POST':
@@ -272,83 +229,66 @@ def produit_delete(request, pk):
         return redirect('produit_list')
     return render(request, 'BeyondComV2/produit_confirm_delete.html', {'produit': produit})
 
-
-
-from django.db.models import Count, Q
+# views.py - modify the inventaire_list view
 from django.shortcuts import render
-from .models import Inventaire, Produit
+from django.db import models
+from .models import Inventaire, Departement
 
 def inventaire_list(request):
-    inventaires = Inventaire.objects.all()
+    inventaires = Inventaire.objects.select_related('produit', 'produit__departement').all()
+    
+    # Get filter parameters
+    selected_department = request.GET.get('department', 'all')
+    selected_state = request.GET.get('state', 'all')
+    selected_etat = request.GET.get('etat', 'all')
+    search_query = request.GET.get('search', '')
 
-    # Liste des états
-    state_choices = Inventaire.state_choices
-
-    # Fetch unique department names from related Produit model
-    departments = Produit.objects.values_list('departement__department_name', flat=True).distinct()
-
-    # Filter by department
-    selected_department = request.GET.get('department')
-    if selected_department:
+    # Apply filters
+    if selected_department and selected_department.lower() != 'all':
         inventaires = inventaires.filter(produit__departement__department_name=selected_department)
-
-    # Filter by state
-    selected_state = request.GET.get('state')
-    if selected_state:
+            
+    if selected_state and selected_state.lower() != 'all':
         inventaires = inventaires.filter(state=selected_state)
-
-    # Filter by etat
-    selected_etat = request.GET.get('etat')
-    if selected_etat:
+            
+    if selected_etat and selected_etat.lower() != 'all':
         inventaires = inventaires.filter(etat_InOut=selected_etat)
-
-    # Search functionality
-    search_query = request.GET.get('search')
+            
     if search_query:
-        inventaires = inventaires.filter(produit__produit_name__icontains=search_query)
+        inventaires = inventaires.filter(
+            models.Q(produit__produit_name__icontains=search_query) |
+            models.Q(produit__code_bar__icontains=search_query)
+        )
 
-    # Check warranty for each product
-    for inventaire in inventaires:
-        inventaire.produit.warranty_isValid = inventaire.produit.warranty_isValid
+    # Get choices for dropdowns
+    departments = list(Departement.objects.values_list('department_name', flat=True))
+    state_choices = [choice[0] for choice in Inventaire.state_choices]
+    etat_choices = ['IN', 'OUT']
 
-    return render(request, 'BeyondComV2/inventaire_list.html', {
+    context = {
         'inventaires': inventaires,
         'departments': departments,
         'state_choices': state_choices,
+        'etat_choices': etat_choices,
         'selected_department': selected_department,
         'selected_state': selected_state,
         'selected_etat': selected_etat,
         'search_query': search_query,
-    })
+    }
 
-import csv
-from django.http import HttpResponse
-from .models import Produit
+    return render(request, 'BeyondComV2/inventaire_list.html', context)
 
 def download_produit_csv(request):
-    # Initialisation de la réponse HTTP avec le type MIME pour un fichier CSV
     response = HttpResponse(content_type='text/csv')
-    # Définition du nom du fichier de téléchargement
     response['Content-Disposition'] = 'attachment; filename="produits.csv"'
-
-    # Écriture du contenu CSV
     writer = csv.writer(response)
-    writer.writerow(['ID', 'Nom du Produit', 'Catégorie', 'Code Barre', 'Prix', 'Description', 'Fournisseur', 'Département', 'Période de Garantie (Mois)', 'Date de Début de Garantie', 'Date de Fin de Garantie', 'Garantie Valide'])  # En-tête
-
-    # Récupération des données filtrées en fonction des paramètres de requête
+    writer.writerow(['ID', 'Nom du Produit', 'Catégorie', 'Code Barre', 'Prix', 'Description', 'Fournisseur', 'Département', 'Période de Garantie (Mois)', 'Date de Début de Garantie', 'Date de Fin de Garantie', 'Garantie Valide'])
     produits = Produit.objects.all()
-
-    # Filtrer par département si présent dans la requête
     selected_department = request.GET.get('department')
+    search_query = request.GET.get('search')
     if selected_department:
         produits = produits.filter(departement__department_name=selected_department)
-
-    # Fonctionnalité de recherche
-    search_query = request.GET.get('search')
     if search_query:
         produits = produits.filter(produit_name__icontains=search_query)
-
-    # Écriture des lignes de données
     for produit in produits:
         writer.writerow([
             produit.produit_id,
@@ -364,40 +304,23 @@ def download_produit_csv(request):
             produit.warranty_end_date,
             'Oui' if produit.warranty_isValid else 'Non'
         ])
-
     return response
 
-
-
 def download_inventaire_csv(request):
-    # Initialisation de la réponse HTTP avec le type MIME pour un fichier CSV
     response = HttpResponse(content_type='text/csv')
-    # Définition du nom du fichier de téléchargement
     response['Content-Disposition'] = 'attachment; filename="inventaires.csv"'
-
-    # Écriture du contenu CSV
     writer = csv.writer(response)
-    writer.writerow(['ID', 'Produit', 'Etat In/Out', 'Date In', 'Quantite Produit', 'Last Updated', 'State'])  # En-tête
-
-    # Récupération des données filtrées en fonction des paramètres de requête
+    writer.writerow(['ID', 'Produit', 'Etat In/Out', 'Date In', 'Quantite Produit', 'Last Updated', 'State'])
     inventaires = Inventaire.objects.all()
-
-    # Filtrer par département si présent dans la requête
     selected_department = request.GET.get('department')
+    selected_state = request.GET.get('state')
+    selected_etat = request.GET.get('etat')
     if selected_department:
         inventaires = inventaires.filter(produit__departement__department_name=selected_department)
-
-    # Filtrer par état si présent dans la requête
-    selected_state = request.GET.get('state')
     if selected_state:
         inventaires = inventaires.filter(state=selected_state)
-
-    # Filtrer par état In/Out si présent dans la requête
-    selected_etat = request.GET.get('etat')
     if selected_etat:
         inventaires = inventaires.filter(etat_InOut=selected_etat)
-
-    # Écriture des lignes de données
     for inventaire in inventaires:
         writer.writerow([
             inventaire.inventaire_id,
@@ -408,9 +331,7 @@ def download_inventaire_csv(request):
             inventaire.last_updated,
             inventaire.state
         ])
-
     return response
-
 
 def inventaire_create(request):
     if request.method == 'POST':
@@ -440,7 +361,6 @@ def inventaire_delete(request, pk):
         return redirect('inventaire_list')
     return render(request, 'BeyondComV2/inventaire_confirm_delete.html', {'inventaire': inventaire})
 
-# Departement views
 def departement_list(request):
     departements = Departement.objects.all()
     return render(request, 'BeyondComV2/departement_list.html', {'departements': departements})
@@ -473,26 +393,17 @@ def departement_delete(request, pk):
         return redirect('departement_list')
     return render(request, 'BeyondComV2/departement_confirm_delete.html', {'departement': departement})
 
-
 def plus_de_details(request):
-    # Retrieve current IN products (etat_InOut = 'IN')
     current_in_products = Inventaire.objects.filter(etat_InOut='IN')
-
-    # Retrieve current OUT products (etat_InOut = 'OUT')
     current_out_products = Inventaire.objects.filter(etat_InOut='OUT')
-
-    # Retrieve all OUT products
     all_out_products = Inventaire.objects.filter(etat_InOut='OUT')
-
-    # Render the template with the provided context
+    
     return render(request, 'BeyondComV2/plus_de_details.html', {
         'current_in_products': current_in_products,
         'current_out_products': current_out_products,
         'all_out_products': all_out_products,
     })
 
-
-# ViewSets for the REST API
 class FournisseurViewSet(viewsets.ModelViewSet):
     queryset = Fournisseur.objects.all()
     serializer_class = FournisseurSerializer
@@ -513,79 +424,242 @@ class InventaireViewSet(viewsets.ModelViewSet):
     queryset = Inventaire.objects.all()
     serializer_class = InventaireSerializer
 
-############################################################################################################
-
-
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
-from .models import Event, Inventaire
-from .forms import EventForm
-import uuid
-
 def event_list(request):
     events = Event.objects.all().prefetch_related('list_of_products__produit')
-    event_details = []
-    for event in events:
-        event_detail = {
-            'event': event,
-            'products': event.list_of_products.all()
-        }
-        event_details.append(event_detail)
+    event_details = [{'event': event, 'products': event.list_of_products.all()} for event in events]
     return render(request, 'BeyondComV2/event_list.html', {'event_details': event_details})
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Event, Inventaire
+# def event_create(request):
+#     if request.method == 'POST':
+#         form = EventForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             return redirect('event_list')
+#     else:
+#         form = EventForm()
+#     products = Inventaire.objects.filter(etat_InOut='IN', state='On').select_related('produit')
+#     inventaires_with_details = [{
+#         'inventaire_id': inv.inventaire_id,
+#         'produit_name': inv.produit.produit_name,
+#         'quantity': inv.quantite_produit
+#     } for inv in products]
+#     return render(request, 'BeyondComV2/event_form.html', {'form': form, 'inventaires_with_details': inventaires_with_details})
+
+# views.py
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .forms import EventForm
+from django.db import transaction
+from django.core.exceptions import ValidationError
+from .models import Event, Inventaire
+from .forms import EventProductForm
 
 def event_create(request):
     if request.method == 'POST':
-        form = EventForm(request.POST)
+        form = EventProductForm(request.POST)
         if form.is_valid():
-            event = form.save()
-            messages.success(request, 'Event created successfully!')
-            return redirect('event_list')
-        else:
-            messages.error(request, 'Please correct the errors in the form.')
+            try:
+                with transaction.atomic():
+                    # Validate date sequence
+                    event_data = form.cleaned_data
+                    if not (event_data['event_pre_date'] <= event_data['event_start'] <= 
+                           event_data['event_end'] <= event_data['event_post_date']):
+                        raise ValidationError("Dates must be in sequence: pre_date ≤ start ≤ end ≤ post_date")
+
+                    event = form.save(commit=False)
+                    event.save()
+                    
+                    produits = form.cleaned_data['produits']
+                    quantites = [int(q.strip()) for q in form.cleaned_data['quantites'].split(',')]
+                    
+                    if len(produits) != len(quantites):
+                        raise ValidationError("Number of products and quantities must match")
+                    
+                    for produit, requested_quantity in zip(produits, quantites):
+                        if requested_quantity <= 0:
+                            raise ValidationError(f"Invalid quantity for {produit.produit.produit_name}")
+                            
+                        if requested_quantity > produit.quantite_produit:
+                            raise ValidationError(
+                                f"Requested quantity ({requested_quantity}) exceeds available quantity "
+                                f"({produit.quantite_produit}) for {produit.produit.produit_name}"
+                            )
+                        
+                        # Store old quantity and update inventory
+                        old_quantity = produit.quantite_produit
+                        remaining_quantity = old_quantity - requested_quantity
+                        
+                        # Update existing entry
+                        produit.old_quantity = old_quantity
+                        produit.quantite_produit = requested_quantity
+                        produit.etat_InOut = 'OUT'
+                        produit.save()
+                        
+                        # Create new entry for remaining quantity if any
+                        if remaining_quantity > 0:
+                            Inventaire.objects.create(
+                                produit=produit.produit,
+                                etat_InOut='IN',
+                                date_in=produit.date_in,
+                                quantite_produit=remaining_quantity,
+                                state=produit.state
+                            )
+                        
+                        event.list_of_products.add(produit)
+                    
+                    messages.success(request, 'Event created successfully.')
+                    return redirect('event_list')
+                    
+            except ValidationError as e:
+                messages.error(request, str(e))
+            except Exception as e:
+                messages.error(request, f"An error occurred: {str(e)}")
+                
     else:
-        form = EventForm()
+        form = EventProductForm()
+    
+    context = {
+        'form': form,
+        'available_inventory': Inventaire.objects.filter(
+            etat_InOut='IN', 
+            state='On'
+        ).select_related('produit')
+    }
+    return render(request, 'BeyondComV2/event_form.html', context)
 
-    products = Inventaire.objects.filter(etat_InOut='IN', state='On').select_related('produit')
-    inventaires_with_details = [{
-        'inventaire_id': inv.inventaire_id,
-        'produit_name': inv.produit.produit_name,
-        'quantity': inv.quantite_produit
-    } for inv in products]
 
-    return render(request, 'BeyondComV2/event_form.html', {'form': form, 'inventaires_with_details': inventaires_with_details})
+from django.db.models import F
+from django.utils import timezone
 
+def check_events(request):
+    """
+    Optional view to manually trigger event checking
+    """
+    current_time = timezone.now()
+    
+    # Find relevant events and trigger their signals
+    events_to_check = Event.objects.filter(
+        event_pre_date__lte=current_time,
+        list_of_products__etat_InOut='IN'
+    ).distinct()
+    
+    for event in events_to_check:
+        event.save()
+        
+    events_to_return = Event.objects.filter(
+        event_post_date__lte=current_time,
+        list_of_products__etat_InOut='OUT'
+    ).distinct()
+    
+    for event in events_to_return:
+        event.save()
+        
+    messages.success(request, "Event status check completed")
+    return redirect('event_list')  # or wherever you want to redirect
 
 def event_update(request, pk):
     event = get_object_or_404(Event, pk=pk)
     if request.method == 'POST':
-        form = EventForm(request.POST, instance=event)
+        form = EventProductForm(request.POST, instance=event)
         if form.is_valid():
-            event = form.save()
-            return redirect('event_list')
+            try:
+                with transaction.atomic():
+                    # Validate date sequence
+                    event_data = form.cleaned_data
+                    if not (event_data['event_pre_date'] <= event_data['event_start'] <= 
+                           event_data['event_end'] <= event_data['event_post_date']):
+                        raise ValidationError("Dates must be in sequence: pre_date ≤ start ≤ end ≤ post_date")
+
+                    # Restore original quantities for current products
+                    for product in event.list_of_products.all():
+                        if product.old_quantity:
+                            product.quantite_produit = product.old_quantity
+                            product.old_quantity = None
+                            product.etat_InOut = 'IN'
+                            product.save()
+
+                    event = form.save(commit=False)
+                    event.save()
+                    
+                    # Clear existing products
+                    event.list_of_products.clear()
+                    
+                    # Process new products and quantities
+                    produits = form.cleaned_data['produits']
+                    quantites = [int(q.strip()) for q in form.cleaned_data['quantites'].split(',')]
+                    
+                    if len(produits) != len(quantites):
+                        raise ValidationError("Number of products and quantities must match")
+                    
+                    for produit, requested_quantity in zip(produits, quantites):
+                        if requested_quantity <= 0:
+                            raise ValidationError(f"Invalid quantity for {produit.produit.produit_name}")
+                            
+                        if requested_quantity > produit.quantite_produit:
+                            raise ValidationError(
+                                f"Requested quantity ({requested_quantity}) exceeds available quantity "
+                                f"({produit.quantite_produit}) for {produit.produit.produit_name}"
+                            )
+                        
+                        # Update inventory same as in create
+                        old_quantity = produit.quantite_produit
+                        remaining_quantity = old_quantity - requested_quantity
+                        
+                        produit.old_quantity = old_quantity
+                        produit.quantite_produit = requested_quantity
+                        produit.etat_InOut = 'OUT'
+                        produit.save()
+                        
+                        if remaining_quantity > 0:
+                            Inventaire.objects.create(
+                                produit=produit.produit,
+                                etat_InOut='IN',
+                                date_in=produit.date_in,
+                                quantite_produit=remaining_quantity,
+                                state=produit.state
+                            )
+                        
+                        event.list_of_products.add(produit)
+                    
+                    messages.success(request, 'Event updated successfully.')
+                    return redirect('event_list')
+                    
+            except ValidationError as e:
+                messages.error(request, str(e))
+            except Exception as e:
+                messages.error(request, f"An error occurred: {str(e)}")
     else:
-        form = EventForm(instance=event)
-
-    products = Inventaire.objects.filter(etat_InOut='IN', state='On').select_related('produit')
-    inventaires_with_details = [{
-        'inventaire_id': inv.inventaire_id,
-        'produit_name': inv.produit.produit_name,
-        'quantity': inv.quantite_produit
-    } for inv in products]
-
-    return render(request, 'BeyondComV2/event_form.html', {'form': form, 'inventaires_with_details': inventaires_with_details})
-
+        form = EventProductForm(instance=event)
+        
+    context = {
+        'form': form,
+        'event': event,
+        'available_inventory': Inventaire.objects.filter(
+            etat_InOut='IN', 
+            state='On'
+        ).select_related('produit')
+    }
+    return render(request, 'BeyondComV2/event_form.html', context)
 
 def event_delete(request, pk):
     event = get_object_or_404(Event, pk=pk)
     if request.method == 'POST':
-        event.delete()
-        return redirect('event_list')
+        try:
+            with transaction.atomic():
+                # Restore original quantities for all products
+                for product in event.list_of_products.all():
+                    if product.old_quantity:
+                        product.quantite_produit = product.old_quantity
+                        product.old_quantity = None
+                        product.etat_InOut = 'IN'
+                        product.save()
+                
+                event.delete()
+                messages.success(request, 'Event deleted successfully.')
+                return redirect('event_list')
+        except Exception as e:
+            messages.error(request, f"An error occurred while deleting the event: {str(e)}")
     return render(request, 'BeyondComV2/event_confirm_delete.html', {'event': event})
+
 class EventViewSet(viewsets.ModelViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer

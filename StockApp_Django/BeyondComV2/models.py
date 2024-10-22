@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import uuid
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 
 class Fournisseur(models.Model):
@@ -83,6 +83,7 @@ class Inventaire(models.Model):
     etat_InOut = models.CharField(max_length=20, choices=etat_InOut_choices, default='IN')
     date_in = models.DateField()
     quantite_produit = models.IntegerField()
+    old_quantity = models.IntegerField(null=True, blank=True)  # New field
     last_updated = models.DateTimeField(auto_now=True)
     state_choices = [
         ('On', 'On'),
@@ -90,9 +91,6 @@ class Inventaire(models.Model):
         ('Maintenance', 'Maintenance')
     ]
     state = models.CharField(max_length=20, choices=state_choices, default='On')
-
-    def __str__(self):
-        return f"{self.produit.produit_name} (ID: {self.inventaire_id}, Quantité: {self.quantite_produit})"
 
 
 class Event(models.Model):
@@ -105,18 +103,44 @@ class Event(models.Model):
     list_of_products = models.ManyToManyField('Inventaire', related_name='events')
 
     def handle_event_pre_date(self):
-        if timezone.now() >= self.event_pre_date:
-            for inventaire in self.list_of_products.filter(etat_InOut='IN'):
-                inventaire.etat_InOut = 'OUT'
-                print("IN to OUT")
-                inventaire.save()
+        try:
+            with transaction.atomic():
+                products_to_update = self.list_of_products.filter(etat_InOut='IN')
+                if products_to_update.exists():
+                    for inventaire in products_to_update:
+                        inventaire.etat_InOut = 'OUT'
+                        inventaire.save()
+                    print(f"Products moved OUT for event: {self.event_name}")
+                return True
+        except Exception as e:
+            print(f"Error in handle_event_pre_date: {str(e)}")
+            return False
 
     def handle_event_post_date(self):
-        if timezone.now() >= self.event_post_date:
-            for inventaire in self.list_of_products.filter(etat_InOut='OUT'):
-                inventaire.etat_InOut = 'IN'
-                print("IN to OUT")
-                inventaire.save()
+        try:
+            with transaction.atomic():
+                products_to_update = self.list_of_products.filter(etat_InOut='OUT')
+                if products_to_update.exists():
+                    for inventaire in products_to_update:
+                        inventaire.etat_InOut = 'IN'
+                        inventaire.save()
+                    print(f"Products moved IN for event: {self.event_name}")
+                return True
+        except Exception as e:
+            print(f"Error in handle_event_post_date: {str(e)}")
+            return False
 
     def __str__(self):
         return self.event_name
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        # Only check dates if this is a new event or dates have changed
+        if is_new:
+            current_time = timezone.now()
+            if current_time >= self.event_pre_date:
+                self.handle_event_pre_date()
+            if current_time >= self.event_post_date:
+                self.handle_event_post_date()

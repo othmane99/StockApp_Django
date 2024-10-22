@@ -56,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'BeyondComV2.middleware.EventCheckMiddleware',
 ]
 
 ROOT_URLCONF = 'StockManagmentApp.urls'

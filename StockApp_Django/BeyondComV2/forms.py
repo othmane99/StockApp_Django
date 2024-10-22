@@ -61,3 +61,25 @@ class EventForm(forms.ModelForm):
             'event_end': forms.DateInput(attrs={'type': 'date'}),
             'event_post_date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+
+from django import forms
+from .models import Event, Inventaire
+
+# forms.py - modify the EventProductForm
+class EventProductForm(forms.ModelForm):
+    produits = forms.ModelMultipleChoiceField(
+        queryset=Inventaire.objects.filter(etat_InOut='IN', state='On'),  # Modified filter
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        label="Select Products"
+    )
+    quantites = forms.CharField(
+        widget=forms.TextInput(),
+        required=True,
+        help_text="Enter quantities for selected products, separated by commas"
+    )
+
+    class Meta:
+        model = Event
+        fields = ['event_name', 'event_pre_date', 'event_start', 'event_end', 'event_post_date', 'produits', 'quantites']
